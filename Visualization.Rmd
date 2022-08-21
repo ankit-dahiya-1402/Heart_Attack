@@ -1,0 +1,158 @@
+---
+title: "Heart Attack Project"
+author: "Ankit Dahiya"
+date: "2022-08-20"
+output: html_document
+---
+###### **Note** This is a small project on Heart data set.
+
+# Introduction
+
+###### The data has 303 rows ans 14 columns containing details about patients. It has details about sex, age and the test results of heart patients. This dataset is being downloaded from kagle. 
+
+
+## Data Processing
+###### First we will remove all the variables stored previously in R Studio.
+
+```{r}
+rm(list = ls())
+```
+
+
+###### Let's load and read the dataset in our R Studio.
+
+```{r}
+data <- read.csv("C:/Users/91880/OneDrive/Desktop/R/Heart Disease/heart.csv")
+```
+
+###### Now we will see tha dataset to get an overview of data.
+
+```{r}
+View(data)
+```
+
+###### Install all the libraries required.
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(corrplot)
+```
+
+
+###### After seeing the data we understood that we have to clean the data as we can see that data is stored in form of numbers with their own representation. So we have to mutate the data in order to make it easy to understand at a glance. For example zero is being used to for Females and one for Males . We have to mutate all the data .
+
+
+```{r}
+heart <- data %>% 
+         mutate(sex     = if_else(sex==1,"MALE","FEMALE"),
+                fbs     = if_else(fbs==1,">120","<-120"),
+                exang   = if_else(exang==1,"YES","NO"),
+                cp      = if_else(cp==1,"ATYPICAL ANGINA",
+                                 if_else(cp==2,"NON-ANGINAL                                                   PAIN","ASYMPTOMATIC")),
+                restecg = if_else(restecg==0,"NORMAL",
+                    if_else(restecg==1,"ABNORMALITY","PROBABLE OR                                                         DEFINITE")),
+                slope   = as.factor(slope),
+                ca      = as.factor(ca),
+                thal    = as.factor(thal),
+                target   = if_else(target==1,"YES","NO") ) %>% 
+      mutate_if(is.character,as.factor)%>%
+      dplyr :: select(target,sex,fbs,exang,cp,restecg,slope,ca,thal,everything())
+
+colnames(heart)[10]<-"age" 
+```
+
+###### Now we have cleaned the data and saved it as heart. Let's get a glimpse over cleaned data.
+
+```{r}
+glimpse(heart)
+```
+
+###### As we can see everything is easy to read and we are ready to analyise the data.
+
+## Analyization and Visualization of Data
+
+###### **What is proportion of having heart disease?**
+
+```{r}
+prop.table(table(heart$target)) 
+```
+
+###### **Figure 1** shows the Number of Patients having and not having the heart disease.
+
+```{r}
+ggplot(heart,aes(target,fill=target))+
+  geom_bar()+
+  xlab("Heart Disease")+
+  ylab("Number of Patient") +
+  scale_fill_discrete(name="Heart Disease",labels= c("Absence","Presence")) +
+  labs(title = "Number of patient having/not having Heart Disease",subtitle = "Figure 1")
+```
+
+
+
+###### **Figure 2** shows the trend of heart disease in different genders.
+
+```{r}
+ggplot(heart,aes(target,fill=sex))+
+  geom_bar()+
+  xlab("Heart Disease")+
+  ylab("Number og Patient")+
+  scale_fill_discrete(name="Sex")+
+  labs(title = "Showing trend of disease amoung different Gender",subtitle = "Figure 2")
+```
+
+###### **Figure 3** Countes the different types of Resting Electrocardiographic.
+
+```{r}
+ggplot(heart,aes(target,fill=restecg))+
+  geom_bar()+
+  xlab("Heart Disease")+
+  ylab("Number og Patient")+
+  scale_fill_discrete(name="Resting Electrocardiographic")+
+  labs(title = "Counting different types of Resting Electrocardiographic",subtitle = "Figure 3")
+```
+
+
+
+###### **Figure 4** tells the trend of heart disease in different age.
+
+```{r}
+heart %>%
+  group_by(age)%>%
+  count()%>%
+  filter(n>10)%>%
+  ggplot()+
+  geom_col(aes(age,n),fill='blue')+
+  xlab("Age")+
+  ylab("Number of Patient")+
+  labs(title = "Age Analysis",subtitle = "Figure 4")
+```
+
+
+
+###### **Figure 5** compares the blood pressure across the chest pain.
+
+
+```{r}
+ggplot(heart,aes(x=sex,y= trestbps)) +
+  geom_boxplot(fill="purple") +
+  xlab('Sex')+
+  ylab('BP')+
+  facet_grid(~cp)+
+  labs(title = "Comparision of blood  pressure arcoss the chest pain",subtitle = "Figure 5")
+```
+
+
+
+###### **Figure 6** Shows the co-relation between different aspects of data.
+
+```{r}
+corr_heart <- cor(heart[,10:14])
+corr_heart
+
+corrplot(corr_heart,method = "circle",type = 'full')
+```
+
+
+
+
